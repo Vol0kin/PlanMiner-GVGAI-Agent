@@ -121,7 +121,8 @@ public class RandomAgent extends AbstractPlayer {
       nextState.advance(action);
 
       if (nextState.isGameOver()) {
-        this.translateGameStateToPDDL(nextState);
+        predicates = this.translateGameStateToPDDL(nextState);
+        RandomAgent.gamePredicates.add(predicates);
       }
 
 
