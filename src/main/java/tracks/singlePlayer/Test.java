@@ -2,6 +2,7 @@ package tracks.singlePlayer;
 
 import java.util.Random;
 import controller.PlanningAgent;
+import controller.RandomAgent;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -36,50 +37,46 @@ public class Test {
 	@Option(names = {"--localhost"}, description = "Call planner running on localhost.")
 	private boolean localHost;
 
-    public static void main(String[] args) {
-    	// Load commandline arguments
-    	Test test = new Test();
-    	CommandLine commandLine = new CommandLine(test);
-    	commandLine.parseArgs(args);
-
-    	// Display help or version information
-    	if (commandLine.isUsageHelpRequested()) {
-    		commandLine.usage(System.out);
-    		return;
-		} else if (commandLine.isVersionHelpRequested()) {
-    		commandLine.printVersionHelp(System.out);
-    		return;
-		}
-
-    	// Load available games
-		String spGamesCollection = "examples/all_games_sp.csv";
-    	String[][] games = Utils.readGames(spGamesCollection);
-
-    	// Game settings
-		boolean visuals = true;
-		int seed = new Random().nextInt();
-
-		// Game and level to play
-		String gameName = games[test.gameIdx][1];
-		String game = games[test.gameIdx][0];
-		String level = game.replace(gameName, gameName + "_lvl" + test.levelIdx);
-
-		// Controller
-		String controller = "controller.PlanningAgent";
-
-		// Find out if the game has to be played by a human or by the agent
-		boolean humanPlayer = test.configurationFile == null;
-
-		// Play game
-		if (humanPlayer) {
-			ArcadeMachine.playOneGame(game, level, null, seed);
-		} else {
-			PlanningAgent.setGameConfigFile(test.configurationFile);
-			PlanningAgent.setDebugMode(test.debugMode);
-			PlanningAgent.setSaveInformation(test.saveOutput);
-			PlanningAgent.setLocalHost(test.localHost);
-			ArcadeMachine.runOneGame(game, level, visuals, controller, null, seed, 0);
-			PlanningAgent.displayStats();
-		}
+  public static void main(String[] args) {
+    // Load commandline arguments
+    Test test = new Test();
+    CommandLine commandLine = new CommandLine(test);
+    commandLine.parseArgs(args);
+    
+    // Display help or version information
+    if (commandLine.isUsageHelpRequested()) {
+      commandLine.usage(System.out);
+      return;
+    } else if (commandLine.isVersionHelpRequested()) {
+      commandLine.printVersionHelp(System.out);
+      return;
     }
+    
+    // Load available games
+    String spGamesCollection = "examples/all_games_sp.csv";
+    String[][] games = Utils.readGames(spGamesCollection);
+    
+    // Game settings
+    boolean visuals = true;
+    int seed = new Random().nextInt();
+    
+    // Game and level to play
+    String gameName = games[test.gameIdx][1];
+    String game = games[test.gameIdx][0];
+    String level = game.replace(gameName, gameName + "_lvl" + test.levelIdx);
+    
+    // Controller
+    String controller = "controller.RandomAgent";
+    
+    // Find out if the game has to be played by a human or by the agent
+    boolean humanPlayer = test.configurationFile == null;
+    
+    // Play game
+    if (humanPlayer) {
+      ArcadeMachine.playOneGame(game, level, null, seed);
+    } else {
+      RandomAgent.setGameConfigFile(test.configurationFile);
+      ArcadeMachine.runOneGame(game, level, visuals, controller, null, seed, 0);
+    }
+  }
 }
