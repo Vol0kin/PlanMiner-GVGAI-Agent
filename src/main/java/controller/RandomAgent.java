@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Planning agent class. It represents an agent which uses a planner to reach
- * a set of goals. See {@link Agenda} to find out how goals are structured.
+ * Random agent class. It represents an agent that has a random behaviour. This
+ * means that the agent moves randomly.
  *
  * @author Vladislav Nikolov Vasilev
  */
@@ -52,27 +52,20 @@ public class RandomAgent extends AbstractPlayer {
     // The following attributes can be modified
     protected static String gameConfigFile;
 
-    // PDDL predicates and objects
-    protected List<String> PDDLGameStatePredicates;
-    protected Map<String, Set<String>> PDDLGameStateObjects;
-
     // Game information data structure (loaded from a .yaml file) and file path
     protected GameInformation gameInformation;
-
-    // List of reached goal predicates that have to be saved
-    protected List<String> reachedSavedGoalPredicates;
 
     // Set of connections between cells
     protected Set<String> connectionSet;
     protected Map<String, Set<String>> gameElementVars;
 
-    // Variable that indicates the game's turn
-    protected int turn;
-
     protected Random randomGenerator;
 
+    protected static List<Types.ACTIONS> executedActions = new ArrayList<>();
+    protected static List<List<String>> gamePredicates = new ArrayList<>();
+
     /**
-     * Class constructor. Creates a new planning agent.
+     * Class constructor. Creates a new random agent.
      *
      * @param stateObservation State observation of the game.
      * @param elapsedCpuTimer  Elapsed CPU time.
@@ -89,18 +82,8 @@ public class RandomAgent extends AbstractPlayer {
         }
 
         // Initialize PDDL related variables
-        this.reachedSavedGoalPredicates = new ArrayList<>();
-        this.PDDLGameStatePredicates = new ArrayList<>();
-        this.PDDLGameStateObjects = new HashMap<>();
-        this.gameInformation.variablesTypes
-                .keySet()
-                .stream()
-                .forEach(key -> this.PDDLGameStateObjects.put(key, new LinkedHashSet<>()));
         this.gameElementVars = this.extractVariablesFromPredicates();
         this.connectionSet = this.generateConnectionPredicates(stateObservation);
-
-        // Set plan variable and turn
-        this.turn = -1;
 
         randomGenerator = new Random();
     }
@@ -116,105 +99,118 @@ public class RandomAgent extends AbstractPlayer {
      */
     @Override
     public Types.ACTIONS act(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
-        this.turn++;
+      // Select a random action
+      ArrayList<Types.ACTIONS> availableActions = stateObservation.getAvailableActions();
 
-        // Get list of available actions
-        ArrayList<Types.ACTIONS> actions = stateObservation.getAvailableActions();
+      int index = randomGenerator.nextInt(availableActions.size());
+      Types.ACTIONS action = availableActions.get(index);
 
-        // Select an action
-        int index = randomGenerator.nextInt(actions.size());
-        Types.ACTIONS action = actions.get(index);
+      // Translate game state to PDDL predicates
+      ArrayList<String> predicates = this.translateGameStateToPDDL(stateObservation);
+
+      RandomAgent.executedActions.add(action);
+      RandomAgent.gamePredicates.add(predicates);
+
+      System.out.println(predicates);
+      Scanner input = new Scanner(System.in);
+      String cont = input.nextLine();
 
 
-        return action;
+      // Use forward model to check if the game ends when the action is executed
+      StateObservation nextState = stateObservation.copy();
+      nextState.advance(action);
+
+      if (nextState.isGameOver()) {
+        this.translateGameStateToPDDL(nextState);
+      }
+
+
+      return action;
     }
 
     /**
      * Method that translates a game state observation to PDDL predicates.
      *
      * @param stateObservation State observation of the game.
+     * @return Returns a list of Strings which correspond to the PDDL predicates
+     * of the stateObservation game state.
      */
-    public void translateGameStateToPDDL(StateObservation stateObservation) {
-        // Get the observations of the game state as elements of the VGDDLRegistry
-        HashSet<String>[][] gameMap = this.getGameElementsMatrix(stateObservation);
+    public ArrayList<String> translateGameStateToPDDL(StateObservation stateObservation) {
+      ArrayList<String> predicates = new ArrayList<>();
 
-        // Clear the list of predicates and objects
-        this.PDDLGameStatePredicates.clear();
-        this.PDDLGameStateObjects.values().stream().forEach(val -> val.clear());
+      // Get the observations of the game state as elements of the VGDDLRegistry
+      HashSet<String>[][] gameMap = this.getGameElementsMatrix(stateObservation);
 
-        final int X_MAX = gameMap.length, Y_MAX = gameMap[0].length;
+      final int X_MAX = gameMap.length, Y_MAX = gameMap[0].length;
 
-        // Process game elements
-        for (int y = 0; y < Y_MAX; y++) {
-            for (int x = 0; x < X_MAX; x++) {
-                for (String cellObservation : gameMap[x][y]) {
-                    // If the observation is in the domain, instantiate its predicates
-                    if (this.gameInformation.gameElementsCorrespondence.containsKey(cellObservation)) {
-                        List<String> predicateList = this.gameInformation.gameElementsCorrespondence.get(cellObservation);
+      // Process game elements
+      for (int y = 0; y < Y_MAX; y++) {
+          for (int x = 0; x < X_MAX; x++) {
+              for (String cellObservation : gameMap[x][y]) {
+                  // If the observation is in the domain, instantiate its predicates
+                  if (this.gameInformation.gameElementsCorrespondence.containsKey(cellObservation)) {
+                      List<String> predicateList = this.gameInformation.gameElementsCorrespondence.get(cellObservation);
 
-                        // Instantiate each predicate
-                        for (String predicate : predicateList) {
-                            String predicateInstance = predicate;
+                      // Instantiate each predicate
+                      for (String predicate : predicateList) {
+                          String predicateInstance = predicate;
 
-                            // Iterate over all the variables associated to the game element and
-                            // instantiate those who appear in the predicate
-                            for (String variable : this.gameElementVars.get(cellObservation)) {
-                                if (predicate.contains(variable)) {
-                                    String variableInstance;
+                          // Iterate over all the variables associated to the game element and
+                          // instantiate those who appear in the predicate
+                          for (String variable : this.gameElementVars.get(cellObservation)) {
+                              if (predicate.contains(variable)) {
+                                  String variableInstance;
 
-                                    if (variable.equals(this.gameInformation.avatarVariable)) {
-                                        variableInstance = variable.replace("?", "");
+                                  if (variable.equals(this.gameInformation.avatarVariable)) {
+                                      variableInstance = String.format(
+                                          "%s - %s", variable,
+                                          this.gameInformation.variablesTypes.get(variable))
+                                        .replace("?", "");
 
-                                        // If orientations are being used, add predicate associated
-                                        // to the player's orientation
-                                        if (this.gameInformation.orientationCorrespondence != null) {
-                                            Vector2d avatarOrientation = stateObservation.getAvatarOrientation();
-                                            Position orientation = null;
+                                      // If orientations are being used, add predicate associated
+                                      // to the player's orientation
+                                      if (this.gameInformation.orientationCorrespondence != null) {
+                                          Vector2d avatarOrientation = stateObservation.getAvatarOrientation();
+                                          Position orientation = null;
 
-                                            if (avatarOrientation.x == 1.0) {
-                                                orientation = Position.RIGHT;
-                                            } else if (avatarOrientation.x == -1.0) {
-                                                orientation = Position.LEFT;
-                                            } else if (avatarOrientation.y == 1.0) {
-                                                orientation = Position.DOWN;
-                                            } else if (avatarOrientation.y == -1.0) {
-                                                orientation = Position.UP;
-                                            }
+                                          if (avatarOrientation.x == 1.0) {
+                                              orientation = Position.RIGHT;
+                                          } else if (avatarOrientation.x == -1.0) {
+                                              orientation = Position.LEFT;
+                                          } else if (avatarOrientation.y == 1.0) {
+                                              orientation = Position.DOWN;
+                                          } else if (avatarOrientation.y == -1.0) {
+                                              orientation = Position.UP;
+                                          }
 
-                                            this.PDDLGameStatePredicates.add(this.gameInformation.orientationCorrespondence
-                                                    .get(orientation)
-                                                    .replace(variable, variableInstance));
-                                        }
-                                    } else {
-                                        variableInstance = String.format("%s_%d_%d", variable, x, y).replace("?", "");
-                                    }
+                                          predicates.add(this.gameInformation.orientationCorrespondence
+                                                  .get(orientation)
+                                                  .replace(variable, variableInstance));
+                                      }
+                                  } else {
+                                      variableInstance = String.format(
+                                          "%s_%d_%d - %s", variable, x, y,
+                                          this.gameInformation.variablesTypes.get(variable))
+                                        .replace("?", "");
+                                  }
 
-                                    // Add instantiated variables to the predicate
-                                    predicateInstance = predicateInstance.replace(variable, variableInstance);
+                                  // Add instantiated variables to the predicate
+                                  predicateInstance = predicateInstance.replace(variable, variableInstance);
+                              }
+                          }
 
-                                    // Save instantiated variable
-                                    this.PDDLGameStateObjects.get(variable).add(variableInstance);
-                                }
-                            }
+                          // Save instantiated predicate
+                          predicates.add(predicateInstance);
+                      }
+                  }
+              }
+          }
+      }
 
-                            // Save instantiated predicate
-                            this.PDDLGameStatePredicates.add(predicateInstance);
-                        }
-                    }
-                }
+      // Add connections to predicates
+      this.connectionSet.stream().forEach(connection -> predicates.add(connection));
 
-                this.PDDLGameStateObjects.get(this.gameInformation.cellVariable).add(
-                    String.format("%s_%d_%d", this.gameInformation.cellVariable, x, y)
-                      .replace("?", "")
-                );
-            }
-        }
-
-        // Add connections to predicates
-        this.connectionSet.stream().forEach(connection -> this.PDDLGameStatePredicates.add(connection));
-
-        // Add saved goals
-        this.reachedSavedGoalPredicates.stream().forEach(goal -> this.PDDLGameStatePredicates.add(goal));
+      return predicates;
     }
 
     /**
@@ -281,14 +277,22 @@ public class RandomAgent extends AbstractPlayer {
         for (int y = 0; y < Y_MAX; y++) {
             for (int x = 0; x < X_MAX; x++) {
                 // Create string containing the current cell
-                String currentCell = String.format("%s_%d_%d", this.gameInformation.cellVariable, x, y).replace("?", "");
+                String currentCell = String.format("%s_%d_%d - %s",
+                    this.gameInformation.cellVariable, x, y,
+                    this.gameInformation.variablesTypes.get(
+                      this.gameInformation.cellVariable)
+                    )
+                  .replace("?", "");
 
                 if (y - 1 >= 0) {
                     String connection = this.gameInformation.connections.get(Position.UP);
                     connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?u", String
-                            .format("%s_%d_%d", this.gameInformation.cellVariable, x, y - 1)
-                            .replace("?", ""));
+                    connection = connection.replace("?u", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y - 1,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
 
                     connections.add(connection);
                 }
@@ -296,9 +300,12 @@ public class RandomAgent extends AbstractPlayer {
                 if (y + 1 < Y_MAX) {
                     String connection = this.gameInformation.connections.get(Position.DOWN);
                     connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?d", String
-                            .format("%s_%d_%d", this.gameInformation.cellVariable, x, y + 1)
-                            .replace("?", ""));
+                    connection = connection.replace("?d", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y + 1,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
 
                     connections.add(connection);
                 }
@@ -306,9 +313,12 @@ public class RandomAgent extends AbstractPlayer {
                 if (x - 1 >= 0) {
                     String connection = this.gameInformation.connections.get(Position.LEFT);
                     connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?l", String
-                            .format("%s_%d_%d", this.gameInformation.cellVariable, x - 1, y)
-                            .replace("?", ""));
+                    connection = connection.replace("?l", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x - 1, y,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
 
                     connections.add(connection);
                 }
@@ -316,9 +326,12 @@ public class RandomAgent extends AbstractPlayer {
                 if (x + 1 < X_MAX) {
                     String connection = this.gameInformation.connections.get(Position.RIGHT);
                     connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?r", String
-                            .format("%s_%d_%d", this.gameInformation.cellVariable, x + 1, y)
-                            .replace("?", ""));
+                    connection = connection.replace("?r", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x + 1, y,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
 
                     connections.add(connection);
                 }

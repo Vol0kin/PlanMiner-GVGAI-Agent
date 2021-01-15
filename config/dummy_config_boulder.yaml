@@ -46,10 +46,10 @@ orientation:
   avatar: NONE
 
 orientationCorrespondence:
-  UP: (oriented-up ?object)
-  DOWN: (oriented-down ?object)
-  LEFT: (oriented-left ?object)
-  RIGHT: (oriented-right ?object)
+  UP: (oriented-up ?avatar)
+  DOWN: (oriented-down ?avatar)
+  LEFT: (oriented-left ?avatar)
+  RIGHT: (oriented-right ?avatar)
 connections:
   NEXT: (next ?n1 ?n2)
   PREVIOUS: (previous ?n1 ?n2)

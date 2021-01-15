@@ -40,10 +40,10 @@ avatarVariable: ?avatar
 #  avatar: NONE
 
 orientationCorrespondence:
-  UP: (oriented-up ?object)
-  DOWN: (oriented-down ?object)
-  LEFT: (oriented-left ?object)
-  RIGHT: (oriented-right ?object)
+  UP: (oriented-up ?avatar)
+  DOWN: (oriented-down ?avatar)
+  LEFT: (oriented-left ?avatar)
+  RIGHT: (oriented-right ?avatar)
 connections:
   UP: (connected-up ?c ?u)
   DOWN: (connected-down ?c ?d)
@@ -52,8 +52,3 @@ connections:
 actionsCorrespondence:
   DO_NOTHING: ACTION_NIL
 
-# Objetivo cualquiera ?
-goals:
-- goalPredicate: (connected-up n0 n1)
-  priority: 1
-  saveGoal: no
