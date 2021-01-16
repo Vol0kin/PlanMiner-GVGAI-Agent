@@ -424,7 +424,9 @@ public class RandomAgent extends AbstractPlayer {
 
       return String.format("(%s %s - %s)", actionStr, avatarVariable,
             this.gameInformation.variablesTypes.get(avatarVariable)
-          ).replace("?", "");
+          )
+        .replace("?", "")
+        .toUpperCase();
     }
 
     /**
