@@ -108,7 +108,7 @@ public class RandomAgent extends AbstractPlayer {
      */
     @Override
     public Types.ACTIONS act(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
-      // Select a random action
+      // Select a random action between the available ones
       ArrayList<Types.ACTIONS> availableActions = stateObservation.getAvailableActions();
 
       int index = randomGenerator.nextInt(availableActions.size());
@@ -116,23 +116,16 @@ public class RandomAgent extends AbstractPlayer {
 
       // Translate game state to PDDL predicates
       String predicates = this.translateGameStateToPDDL(stateObservation);
-
-      //RandomAgent.executedActions.add(action);
       RandomAgent.gamePredicates.add(predicates);
 
       // Instantiate action
       String instantiatedAction;
       String actionStr = this.actionCorrespondence.get(action);
 
-
-      // Use forward model to check if the game ends when the action is executed
+      // Use forward model to extract information about the current action
+      // and the next game state
       StateObservation nextState = stateObservation.copy();
       nextState.advance(action);
-
-      if (nextState.isGameOver()) {
-        predicates = this.translateGameStateToPDDL(nextState);
-        RandomAgent.gamePredicates.add(predicates);
-      }
 
       if (!stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation())) {
         actionStr = actionStr.replace("MOVE", "TURN");
@@ -146,6 +139,11 @@ public class RandomAgent extends AbstractPlayer {
         int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
 
         instantiatedAction = this.createMoveAction(actionStr, x, y);
+      }
+
+      if (nextState.isGameOver()) {
+        String nextTurnPredicates = this.translateGameStateToPDDL(nextState);
+        RandomAgent.gamePredicates.add(nextTurnPredicates);
       }
 
       RandomAgent.executedActions.add(instantiatedAction);
