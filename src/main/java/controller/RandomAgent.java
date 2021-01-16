@@ -60,9 +60,10 @@ public class RandomAgent extends AbstractPlayer {
     protected Map<String, Set<String>> gameElementVars;
 
     protected Random randomGenerator;
+    protected Map<Types.ACTIONS, String> actionCorrespondence;
 
     protected static List<Types.ACTIONS> executedActions = new ArrayList<>();
-    protected static List<List<String>> gamePredicates = new ArrayList<>();
+    protected static List<String> gamePredicates = new ArrayList<>();
 
     /**
      * Class constructor. Creates a new random agent.
@@ -71,21 +72,29 @@ public class RandomAgent extends AbstractPlayer {
      * @param elapsedCpuTimer  Elapsed CPU time.
      */
     public RandomAgent(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
-        // Load game information
-        Yaml yaml = new Yaml(new Constructor(GameInformation.class));
+      // Load game information
+      Yaml yaml = new Yaml(new Constructor(GameInformation.class));
 
-        try {
-            InputStream inputStream = new FileInputStream(new File(RandomAgent.gameConfigFile));
-            this.gameInformation = yaml.load(inputStream);
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getStackTrace());
-        }
+      try {
+          InputStream inputStream = new FileInputStream(new File(RandomAgent.gameConfigFile));
+          this.gameInformation = yaml.load(inputStream);
+      } catch (FileNotFoundException e) {
+          System.out.println(e.getStackTrace());
+      }
 
-        // Initialize PDDL related variables
-        this.gameElementVars = this.extractVariablesFromPredicates();
-        this.connectionSet = this.generateConnectionPredicates(stateObservation);
+      // Initialize PDDL related variables
+      this.gameElementVars = this.extractVariablesFromPredicates();
+      this.connectionSet = this.generateConnectionPredicates(stateObservation);
 
-        randomGenerator = new Random();
+      randomGenerator = new Random();
+
+      actionCorrespondence = new HashMap<>();
+
+      actionCorrespondence.put(Types.ACTIONS.ACTION_UP, "MOVE_UP");
+      actionCorrespondence.put(Types.ACTIONS.ACTION_DOWN, "MOVE_DOWN");
+      actionCorrespondence.put(Types.ACTIONS.ACTION_LEFT, "MOVE_LEFT");
+      actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "MOVE_RIGHT");
+      actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
     }
 
     /**
@@ -106,14 +115,14 @@ public class RandomAgent extends AbstractPlayer {
       Types.ACTIONS action = availableActions.get(index);
 
       // Translate game state to PDDL predicates
-      ArrayList<String> predicates = this.translateGameStateToPDDL(stateObservation);
+      String predicates = this.translateGameStateToPDDL(stateObservation);
 
       RandomAgent.executedActions.add(action);
       RandomAgent.gamePredicates.add(predicates);
 
-      System.out.println(predicates);
+      /*System.out.println(predicates);
       Scanner input = new Scanner(System.in);
-      String cont = input.nextLine();
+      String cont = input.nextLine();*/
 
 
       // Use forward model to check if the game ends when the action is executed
@@ -125,7 +134,6 @@ public class RandomAgent extends AbstractPlayer {
         RandomAgent.gamePredicates.add(predicates);
       }
 
-
       return action;
     }
 
@@ -133,11 +141,11 @@ public class RandomAgent extends AbstractPlayer {
      * Method that translates a game state observation to PDDL predicates.
      *
      * @param stateObservation State observation of the game.
-     * @return Returns a list of Strings which correspond to the PDDL predicates
-     * of the stateObservation game state.
+     * @return Returns an uppercase String that contains the PDDL predicates.
+     * The type of each object is specified in the predicate.
      */
-    public ArrayList<String> translateGameStateToPDDL(StateObservation stateObservation) {
-      ArrayList<String> predicates = new ArrayList<>();
+    public String translateGameStateToPDDL(StateObservation stateObservation) {
+      List<String> predicates = new ArrayList<>();
 
       // Get the observations of the game state as elements of the VGDDLRegistry
       HashSet<String>[][] gameMap = this.getGameElementsMatrix(stateObservation);
@@ -201,7 +209,7 @@ public class RandomAgent extends AbstractPlayer {
                           }
 
                           // Save instantiated predicate
-                          predicates.add(predicateInstance);
+                          predicates.add(predicateInstance.toUpperCase());
                       }
                   }
               }
@@ -211,7 +219,7 @@ public class RandomAgent extends AbstractPlayer {
       // Add connections to predicates
       this.connectionSet.stream().forEach(connection -> predicates.add(connection));
 
-      return predicates;
+      return String.format("(%s)", String.join(" ", predicates));
     }
 
     /**
@@ -258,6 +266,18 @@ public class RandomAgent extends AbstractPlayer {
         RandomAgent.gameConfigFile = path;
     }
 
+    public static void displayPostGameInformation() {
+      System.out.println("##Tasks##");
+      for (int i = 0; i < RandomAgent.executedActions.size(); i++) {
+        System.out.println(String.format("[%d, %d]: %s", i, i+1, "#TODO"));
+      }
+
+      System.out.println("\n\n##States##");
+      for (int i = 0; i < RandomAgent.gamePredicates.size(); i++) {
+        System.out.println(String.format("[%d]: %s\n", i, RandomAgent.gamePredicates.get(i)));
+      }
+    }
+
     /**
      * Method that generates the connection predicates between the cells of the
      * map.
@@ -295,7 +315,7 @@ public class RandomAgent extends AbstractPlayer {
                           )
                         .replace("?", ""));
 
-                    connections.add(connection);
+                    connections.add(connection.toUpperCase());
                 }
 
                 if (y + 1 < Y_MAX) {
@@ -308,7 +328,7 @@ public class RandomAgent extends AbstractPlayer {
                           )
                         .replace("?", ""));
 
-                    connections.add(connection);
+                    connections.add(connection.toUpperCase());
                 }
 
                 if (x - 1 >= 0) {
@@ -321,7 +341,7 @@ public class RandomAgent extends AbstractPlayer {
                           )
                         .replace("?", ""));
 
-                    connections.add(connection);
+                    connections.add(connection.toUpperCase());
                 }
 
                 if (x + 1 < X_MAX) {
@@ -334,7 +354,7 @@ public class RandomAgent extends AbstractPlayer {
                           )
                         .replace("?", ""));
 
-                    connections.add(connection);
+                    connections.add(connection.toUpperCase());
                 }
             }
         }
@@ -350,58 +370,31 @@ public class RandomAgent extends AbstractPlayer {
      * associated to them.
      */
     private Map<String, Set<String>> extractVariablesFromPredicates() {
-        Map<String, Set<String>> varsFromPredicates = new HashMap<>();
+      Map<String, Set<String>> varsFromPredicates = new HashMap<>();
 
-        // Pattern that matches a variable
-        Pattern variablePattern = Pattern.compile("\\?[a-zA-Z]+");
+      // Pattern that matches a variable
+      Pattern variablePattern = Pattern.compile("\\?[a-zA-Z]+");
 
-        // Iterate over all the pairs <game element: [predicates]>
-        for (Map.Entry<String, ArrayList<String>> entry : this.gameInformation.gameElementsCorrespondence.entrySet()) {
-            String gameObservation = entry.getKey();
-            Set<String> variables = new HashSet<>();
+      // Iterate over all the pairs <game element: [predicates]>
+      for (Map.Entry<String, ArrayList<String>> entry : this.gameInformation.gameElementsCorrespondence.entrySet()) {
+          String gameObservation = entry.getKey();
+          Set<String> variables = new HashSet<>();
 
-            // Iterate over the predicates searching for variables
-            for (String observation : entry.getValue()) {
-                Matcher variableMatcher = variablePattern.matcher(observation);
+          // Iterate over the predicates searching for variables
+          for (String observation : entry.getValue()) {
+              Matcher variableMatcher = variablePattern.matcher(observation);
 
-                while (variableMatcher.find()) {
-                    for (int i = 0; i <= variableMatcher.groupCount(); i++) {
-                        variables.add(variableMatcher.group(i));
-                    }
-                }
-            }
+              while (variableMatcher.find()) {
+                  for (int i = 0; i <= variableMatcher.groupCount(); i++) {
+                      variables.add(variableMatcher.group(i));
+                  }
+              }
+          }
 
-            // Add the predicates associated to the game element
-            varsFromPredicates.put(gameObservation, variables);
-        }
+          // Add the predicates associated to the game element
+          varsFromPredicates.put(gameObservation, variables);
+      }
 
-        return varsFromPredicates;
-    }
-
-    /**
-     * Method that prints an array of messages and waits for the user's input.
-     * This method is used when the debug mode is enabled.
-     *
-     * @param messages Messages to be printed.
-     */
-    private void showMessagesWait(String... messages) {
-        this.printMessages(messages);
-
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Press [ENTER] to continue");
-        scanner.nextLine();
-    }
-
-    /**
-     * Method that prints an array of messages. This method is used when the debug
-     * mode is enabled.
-     *
-     * @param messages Messages to be printed.
-     */
-    private void printMessages(String... messages) {
-        for (String m : messages) {
-            System.out.println(m);
-        }
+      return varsFromPredicates;
     }
 }

@@ -76,6 +76,7 @@ public class Test {
     } else {
       RandomAgent.setGameConfigFile(test.configurationFile);
       ArcadeMachine.runOneGame(game, level, visuals, controller, null, seed, 0);
+      RandomAgent.displayPostGameInformation();
     }
   }
 }
