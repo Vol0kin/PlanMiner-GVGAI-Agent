@@ -1,7 +1,3 @@
-domainFile: domains/dummy_boulder_cell.pddl
-problemFile: problem.pddl
-domainName: VGDLGame
-
 gameElementsCorrespondence:
   wall:
   - (at ?c ?wall)
@@ -36,8 +32,6 @@ cellVariable: ?c
 avatarVariable: ?avatar
 
 # Esto habrá que modificarlo según el juego
-#orientation:
-#  avatar: NONE
 
 orientationCorrespondence:
   UP: (oriented-up ?avatar)
@@ -49,6 +43,4 @@ connections:
   DOWN: (connected-down ?c ?d)
   LEFT: (connected-left ?c ?l)
   RIGHT: (connected-right ?c ?r)
-actionsCorrespondence:
-  DO_NOTHING: ACTION_NIL
 

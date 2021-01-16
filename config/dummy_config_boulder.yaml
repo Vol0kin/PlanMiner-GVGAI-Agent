@@ -1,12 +1,6 @@
 # Cambios:
 # cellVariable -> numVariable
 # connections
-
-domainFile: domains/dummy_boulder.pddl
-problemFile: problem.pddl
-domainName: VGDLGame
-
-
 gameElementsCorrespondence:
   wall:
   - (at ?n0 ?n1 ?wall)
@@ -42,8 +36,6 @@ numVariable: ?n
 avatarVariable: ?avatar
 
 # Esto habrá que modificarlo según el juego
-orientation:
-  avatar: NONE
 
 orientationCorrespondence:
   UP: (oriented-up ?avatar)
@@ -53,13 +45,4 @@ orientationCorrespondence:
 connections:
   NEXT: (next ?n1 ?n2)
   PREVIOUS: (previous ?n1 ?n2)
-actionsCorrespondence:
-  DO_NOTHING: ACTION_NIL
-additionalPredicates: {}
-addDeadObjects: {}
 
-# Objetivo cualquiera ?
-goals:
-- goalPredicate: (next n0 n1)
-  priority: 1
-  saveGoal: no

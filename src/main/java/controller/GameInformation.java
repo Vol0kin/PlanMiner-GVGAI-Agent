@@ -35,16 +35,12 @@ import java.util.Map;
  * @author Vladislav Nikolov Vasilev
  */
 public class GameInformation {
-    public String domainFile;
-    public String problemFile;
-    public String domainName;
     public String cellVariable;
     public String avatarVariable;
     public Map<String, ArrayList<String>> gameElementsCorrespondence;
     public Map<String, String> variablesTypes;
     public Map<Position, String> orientationCorrespondence;
     public Map<Position, String> connections;
-    public Map<String, Types.ACTIONS> actionsCorrespondence;
 
     public GameInformation() {
     }
