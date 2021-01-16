@@ -27,15 +27,6 @@ public class Test {
 	@Option(names = {"-c", "--config"}, description = "YAML configuration file that will be used by the agent.")
 	private String configurationFile;
 
-	@Option(names = {"-d", "--debug"}, description = "Debug mode.")
-	private boolean debugMode;
-
-	@Option(names = {"-s", "--save"}, description = "Save runtime information (problems, plans and log).")
-	private boolean saveOutput;
-
-	@Option(names = {"--localhost"}, description = "Call planner running on localhost.")
-	private boolean localHost;
-
   public static void main(String[] args) {
     // Load commandline arguments
     Test test = new Test();
