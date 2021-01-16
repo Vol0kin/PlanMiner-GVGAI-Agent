@@ -62,7 +62,7 @@ public class RandomAgent extends AbstractPlayer {
     protected Random randomGenerator;
     protected Map<Types.ACTIONS, String> actionCorrespondence;
 
-    protected static List<Types.ACTIONS> executedActions = new ArrayList<>();
+    protected static List<String> executedActions = new ArrayList<>();
     protected static List<String> gamePredicates = new ArrayList<>();
 
     /**
@@ -117,12 +117,12 @@ public class RandomAgent extends AbstractPlayer {
       // Translate game state to PDDL predicates
       String predicates = this.translateGameStateToPDDL(stateObservation);
 
-      RandomAgent.executedActions.add(action);
+      //RandomAgent.executedActions.add(action);
       RandomAgent.gamePredicates.add(predicates);
 
-      /*System.out.println(predicates);
-      Scanner input = new Scanner(System.in);
-      String cont = input.nextLine();*/
+      // Instantiate action
+      String instantiatedAction;
+      String actionStr = this.actionCorrespondence.get(action);
 
 
       // Use forward model to check if the game ends when the action is executed
@@ -133,6 +133,22 @@ public class RandomAgent extends AbstractPlayer {
         predicates = this.translateGameStateToPDDL(nextState);
         RandomAgent.gamePredicates.add(predicates);
       }
+
+      if (!stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation())) {
+        actionStr = actionStr.replace("MOVE", "TURN");
+        instantiatedAction = this.createAvatarAction(actionStr);
+      } else if (action.equals(Types.ACTIONS.ACTION_USE)) {
+        instantiatedAction = this.createAvatarAction(actionStr);
+      } else {
+        Vector2d currentAvatarPos = stateObservation.getAvatarPosition();
+        
+        int x = (int)currentAvatarPos.x / stateObservation.getBlockSize();
+        int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
+
+        instantiatedAction = this.createMoveAction(actionStr, x, y);
+      }
+
+      RandomAgent.executedActions.add(instantiatedAction);
 
       return action;
     }
@@ -269,7 +285,7 @@ public class RandomAgent extends AbstractPlayer {
     public static void displayPostGameInformation() {
       System.out.println("##Tasks##");
       for (int i = 0; i < RandomAgent.executedActions.size(); i++) {
-        System.out.println(String.format("[%d, %d]: %s", i, i+1, "#TODO"));
+        System.out.println(String.format("[%d, %d]: %s", i, i+1, RandomAgent.executedActions.get(i)));
       }
 
       System.out.println("\n\n##States##");
@@ -396,5 +412,69 @@ public class RandomAgent extends AbstractPlayer {
       }
 
       return varsFromPredicates;
+    }
+
+    /**
+     * Method used to create an action instance which only involves the avatar such
+     * as an action that changes the avatar's orientation or an USE action.
+     *
+     * @param actionStr String that contains the action to be instantiated.
+     * @return Returns a String containing the instantiated action.
+     */
+    private String createAvatarAction(String actionStr) {
+      String avatarVariable = this.gameInformation.avatarVariable;
+
+      return String.format("(%s %s - %s)", actionStr, avatarVariable,
+            this.gameInformation.variablesTypes.get(avatarVariable)
+          ).replace("?", "");
+    }
+
+    /**
+     * Method used to create an action instance of a movement action. An instance
+     * of a movement action follows this pattern:
+     * (MOV_ACTION AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE NEXT_CELL - CELL_TYPE).
+     *
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     * @return Returns a String containing the instantiated action.
+     */ 
+    private String createMoveAction(String actionStr, int currentX, int currentY) {
+      String cellVariable = this.gameInformation.cellVariable;
+      String cellType = this.gameInformation.variablesTypes.get(cellVariable);
+
+      String avatarVariable = this.gameInformation.avatarVariable;
+      String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
+
+      int nextX = currentX;
+      int nextY = currentY;
+      
+      switch(actionStr) {
+        case "MOVE_UP":
+          nextY--;
+          break;
+        case "MOVE_DOWN":
+          nextY++;
+          break;
+        case "MOVE_RIGHT":
+          nextX++;
+          break;
+        case "MOVE_LEFT":
+          nextX--;
+          break;
+      }
+
+      // Instantiate current cell and next cell objects
+      String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
+      String nextCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
+
+      String instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s)",
+          actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
+          cellType)
+        .replace("?", "")
+        .toUpperCase();
+
+      return instantiatedAction;
     }
 }
