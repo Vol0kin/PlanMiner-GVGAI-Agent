@@ -42,7 +42,7 @@ $ java -jar target/RANDOM-AGENT-1.0.jar [options]
 
 The allowed options are listed below:
 
-```sh
+```
 Usage: GVGAI-PDDL [-hV] [-c=<configurationFile>] -g=<gameIdx> -l=<levelIdx>
 Launches a new GVGAI game played by a random agent or by a human.
   -c, --config=<configurationFile>
