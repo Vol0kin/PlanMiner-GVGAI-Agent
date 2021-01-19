@@ -208,7 +208,8 @@ public class RandomAgent extends AbstractPlayer {
 
                                           predicates.add(this.gameInformation.orientationCorrespondence
                                                   .get(orientation)
-                                                  .replace(variable, variableInstance));
+                                                  .replace(variable, variableInstance)
+                                                  .toUpperCase());
                                       }
                                   } else {
                                       variableInstance = String.format(
