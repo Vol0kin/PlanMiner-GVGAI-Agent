@@ -127,6 +127,11 @@ public class RandomAgent extends AbstractPlayer {
       StateObservation nextState = stateObservation.copy();
       nextState.advance(action);
 
+      int numResources = this.getNumberResources(stateObservation);
+      System.out.println(stateObservation.getResourcesPositions(stateObservation.getAvatarPosition())[0]);
+
+      //System.out.println(numResources);
+
       if (!stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation())) {
         actionStr = actionStr.replace("MOVE", "TURN");
         instantiatedAction = this.createAvatarAction(actionStr);
@@ -138,7 +143,9 @@ public class RandomAgent extends AbstractPlayer {
         int x = (int)currentAvatarPos.x / stateObservation.getBlockSize();
         int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
 
-        instantiatedAction = this.createMoveAction(actionStr, x, y);
+        boolean isResourcePicked = numResources != this.getNumberResources(nextState);
+
+        instantiatedAction = this.createMoveAction(actionStr, x, y, isResourcePicked);
       }
 
       if (nextState.isGameOver()) {
@@ -439,9 +446,11 @@ public class RandomAgent extends AbstractPlayer {
      * to be instantiated.
      * @param currentX Position of the avatar on the X-axis.
      * @param currentY Position of the avatar on the Y-axis.
+     * @param isResourcePicked Boolean that tells if a resource will be picked
+     * when the action is executed.
      * @return Returns a String containing the instantiated action.
      */ 
-    private String createMoveAction(String actionStr, int currentX, int currentY) {
+    private String createMoveAction(String actionStr, int currentX, int currentY, boolean isResourcePicked) {
       String cellVariable = this.gameInformation.cellVariable;
       String cellType = this.gameInformation.variablesTypes.get(cellVariable);
 
@@ -466,6 +475,10 @@ public class RandomAgent extends AbstractPlayer {
           break;
       }
 
+      if (isResourcePicked) {
+        actionStr += "_PICK_RESOURCE";
+      }
+
       // Instantiate current cell and next cell objects
       String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
       String nextCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
@@ -477,5 +490,17 @@ public class RandomAgent extends AbstractPlayer {
         .toUpperCase();
 
       return instantiatedAction;
+    }
+
+    private int getNumberResources(StateObservation stateObs) {
+      int numResources = 0;
+
+      ArrayList<Observation>[] resources = stateObs.getResourcesPositions();
+
+      for (int i = 0; i < resources.length; i++) {
+        numResources += resources[i].size();
+      }
+
+      return numResources;
     }
 }
