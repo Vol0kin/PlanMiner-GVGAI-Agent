@@ -128,7 +128,7 @@ public class RandomAgent extends AbstractPlayer {
       nextState.advance(action);
 
       int numResources = this.getNumberResources(stateObservation);
-      System.out.println(stateObservation.getResourcesPositions(stateObservation.getAvatarPosition())[0]);
+      //System.out.println(stateObservation.getResourcesPositions(stateObservation.getAvatarPosition())[0]);
 
       //System.out.println(numResources);
 
@@ -145,7 +145,7 @@ public class RandomAgent extends AbstractPlayer {
 
         boolean isResourcePicked = numResources != this.getNumberResources(nextState);
 
-        instantiatedAction = this.createMoveAction(actionStr, x, y, isResourcePicked);
+        instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
       }
 
       if (nextState.isGameOver()) {
@@ -272,8 +272,7 @@ public class RandomAgent extends AbstractPlayer {
 
                 if (gameState[x][y].size() > 0) {
                     for (int i = 0; i < gameState[x][y].size(); i++) {
-                        int itype = gameState[x][y].get(i).itype;
-                        gameStringMap[x][y].add(VGDLRegistry.GetInstance().getRegisteredSpriteKey(itype));
+                        gameStringMap[x][y].add(this.getGameElementFromObservation(gameState[x][y].get(i)));
                     }
                 } else {
                     gameStringMap[x][y].add("background");
@@ -298,6 +297,10 @@ public class RandomAgent extends AbstractPlayer {
       for (int i = 0; i < RandomAgent.gamePredicates.size(); i++) {
         System.out.println(String.format("[%d]: %s\n", i, RandomAgent.gamePredicates.get(i)));
       }
+    }
+
+    protected String getGameElementFromObservation(Observation obs) {
+      return VGDLRegistry.GetInstance().getRegisteredSpriteKey(obs.itype);
     }
 
     /**
@@ -442,6 +445,7 @@ public class RandomAgent extends AbstractPlayer {
      * of a movement action follows this pattern:
      * (MOV_ACTION AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE NEXT_CELL - CELL_TYPE).
      *
+     * @param stateObs Current state observation.
      * @param actionStr String that contains the movement action that is going
      * to be instantiated.
      * @param currentX Position of the avatar on the X-axis.
@@ -450,7 +454,8 @@ public class RandomAgent extends AbstractPlayer {
      * when the action is executed.
      * @return Returns a String containing the instantiated action.
      */ 
-    private String createMoveAction(String actionStr, int currentX, int currentY, boolean isResourcePicked) {
+    private String createMoveAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY, boolean isResourcePicked) {
       String cellVariable = this.gameInformation.cellVariable;
       String cellType = this.gameInformation.variablesTypes.get(cellVariable);
 
@@ -475,19 +480,53 @@ public class RandomAgent extends AbstractPlayer {
           break;
       }
 
-      if (isResourcePicked) {
-        actionStr += "_PICK_RESOURCE";
-      }
-
       // Instantiate current cell and next cell objects
       String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
       String nextCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
+      String instantiatedAction;
 
-      String instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s)",
-          actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
-          cellType)
-        .replace("?", "")
-        .toUpperCase();
+      if (isResourcePicked) {
+        actionStr += "_PICK_RESOURCE";
+
+        int blockSize = stateObs.getBlockSize();
+
+        Vector2d resourcePosition = new Vector2d(nextX * blockSize, nextY * blockSize);
+        ArrayList<Observation>[] resources = stateObs.getResourcesPositions(resourcePosition);
+
+        Observation resourceObservation = null;
+
+        for (int i = 0; i < resources.length; i++) {
+          for (Observation obs: resources[i]) {
+            if (obs.sqDist == 0.0) {
+              resourceObservation = obs;
+            }
+          }
+        }
+
+        String gameElement = this.getGameElementFromObservation(resourceObservation);
+        String resourceObject = "";
+
+        for (String object: this.gameElementVars.get(gameElement)) {
+          if (!object.equals(this.gameInformation.cellVariable)) {
+            resourceObject = object;
+          }
+        }
+
+        String resourceType = this.gameInformation.variablesTypes.get(resourceObject);
+        resourceObject = String.format("%s_%d_%d", resourceObject, nextX, nextY);
+
+        instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s %s - %s)",
+            actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
+            cellType, resourceObject, resourceType)
+          .replace("?", "")
+          .toUpperCase();
+      } else {
+        instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s)",
+            actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
+            cellType)
+          .replace("?", "")
+          .toUpperCase();
+      }
 
       return instantiatedAction;
     }
