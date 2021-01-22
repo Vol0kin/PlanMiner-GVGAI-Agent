@@ -27,7 +27,7 @@ public class Test {
 	@Option(names = {"-c", "--config"}, description = "YAML configuration file that will be used by the agent.")
 	private String configurationFile;
 
-  @Option(names = {"--numeric"}, description = "Use the NumericRandomAgent (numeric representation of the world).")
+  @Option(names = {"--numeric"}, description = "Use NumericRandomAgent (numeric representation of the world).")
   private boolean numeric;
 
   public static void main(String[] args) {
