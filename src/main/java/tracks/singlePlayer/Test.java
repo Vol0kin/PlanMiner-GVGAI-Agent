@@ -2,6 +2,7 @@ package tracks.singlePlayer;
 
 import java.util.Random;
 import controller.RandomAgent;
+import controller.AbstractRandomAgent;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -65,9 +66,9 @@ public class Test {
     if (humanPlayer) {
       ArcadeMachine.playOneGame(game, level, null, seed);
     } else {
-      RandomAgent.setGameConfigFile(test.configurationFile);
+      AbstractRandomAgent.setGameConfigFile(test.configurationFile);
       ArcadeMachine.runOneGame(game, level, visuals, controller, null, seed, 0);
-      RandomAgent.displayPostGameInformation();
+      AbstractRandomAgent.displayPostGameInformation();
     }
   }
 }
