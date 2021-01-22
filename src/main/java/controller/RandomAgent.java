@@ -65,6 +65,8 @@ public class RandomAgent extends AbstractPlayer {
     protected static List<String> executedActions = new ArrayList<>();
     protected static List<String> gamePredicates = new ArrayList<>();
 
+    protected boolean isDetectedGameOver;
+
     /**
      * Class constructor. Creates a new random agent.
      *
@@ -86,15 +88,17 @@ public class RandomAgent extends AbstractPlayer {
       this.gameElementVars = this.extractVariablesFromPredicates();
       this.connectionSet = this.generateConnectionPredicates(stateObservation);
 
-      randomGenerator = new Random();
+      this.randomGenerator = new Random();
 
-      actionCorrespondence = new HashMap<>();
+      this.actionCorrespondence = new HashMap<>();
 
-      actionCorrespondence.put(Types.ACTIONS.ACTION_UP, "MOVE_UP");
-      actionCorrespondence.put(Types.ACTIONS.ACTION_DOWN, "MOVE_DOWN");
-      actionCorrespondence.put(Types.ACTIONS.ACTION_LEFT, "MOVE_LEFT");
-      actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "MOVE_RIGHT");
-      actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_UP, "MOVE_UP");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_DOWN, "MOVE_DOWN");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_LEFT, "MOVE_LEFT");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "MOVE_RIGHT");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
+
+      this.isDetectedGameOver = false;
     }
 
     /**
@@ -148,9 +152,14 @@ public class RandomAgent extends AbstractPlayer {
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
       }
 
-      if (nextState.isGameOver()) {
-        String nextTurnPredicates = this.translateGameStateToPDDL(nextState);
-        RandomAgent.gamePredicates.add(nextTurnPredicates);
+      for (int i = 0; i < 10; i++) {
+        if (nextState.isGameOver()) {
+          String nextTurnPredicates = this.translateGameStateToPDDL(nextState);
+          RandomAgent.gamePredicates.add(nextTurnPredicates);
+        }
+
+        nextState = stateObservation.copy();
+        nextState.advance(action);
       }
 
       RandomAgent.executedActions.add(instantiatedAction);
