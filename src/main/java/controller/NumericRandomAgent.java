@@ -1,5 +1,5 @@
 /*
- * RandomAgent.java
+ * NumericRandomAgent.java
  *
  * Copyright (C) 2021 Vladislav Nikolov Vasilev
  *
@@ -18,7 +18,7 @@
  */
 
 /**
- * Package that contains the planning agent along with its data structures.
+ * Package that contains the random agents. 
  */
 package controller;
 
@@ -30,23 +30,20 @@ import tools.Vector2d;
 import java.util.*;
 
 /**
- * Random agent class. It represents an agent that has a random behaviour. This
- * means that the agent moves randomly.
+ * Numeric random agent class. It represents an agent that has a random behaviour.
+ * This means that the agent moves randomly. It uses a numeric world representation.
  *
  * @author Vladislav Nikolov Vasilev
  */
-public class RandomAgent extends AbstractRandomAgent {
-    protected Set<String> connectionSet;
-
+public class NumericRandomAgent extends AbstractRandomAgent {
     /**
      * Class constructor. Creates a new random agent.
      *
      * @param stateObservation State observation of the game.
      * @param elapsedCpuTimer  Elapsed CPU time.
      */
-    public RandomAgent(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
+    public NumericRandomAgent(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
       super(stateObservation, elapsedCpuTimer);
-      this.connectionSet = this.generateConnectionPredicates(stateObservation);
     }
 
     /**
@@ -121,6 +118,9 @@ public class RandomAgent extends AbstractRandomAgent {
                               }
                           }
 
+                          int coordinate = predicateInstance.contains("column") ? x : y;
+                          predicateInstance = String.format("(= %s %d)", predicateInstance, coordinate);
+
                           // Save instantiated predicate
                           predicates.add(predicateInstance.toUpperCase());
                       }
@@ -128,9 +128,6 @@ public class RandomAgent extends AbstractRandomAgent {
               }
           }
       }
-
-      // Add connections to predicates
-      this.connectionSet.stream().forEach(connection -> predicates.add(connection));
 
       return String.format("(%s)", String.join(" ", predicates));
     }
@@ -151,8 +148,6 @@ public class RandomAgent extends AbstractRandomAgent {
      */ 
     protected String createMoveAction(StateObservation stateObs, String actionStr,
         int currentX, int currentY, boolean isResourcePicked) {
-      String cellVariable = this.gameInformation.cellVariable;
-      String cellType = this.gameInformation.variablesTypes.get(cellVariable);
 
       String avatarVariable = this.gameInformation.avatarVariable;
       String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
@@ -176,8 +171,6 @@ public class RandomAgent extends AbstractRandomAgent {
       }
 
       // Instantiate current cell and next cell objects
-      String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
-      String nextCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
       String instantiatedAction;
 
       if (isResourcePicked) {
@@ -210,103 +203,17 @@ public class RandomAgent extends AbstractRandomAgent {
         String resourceType = this.gameInformation.variablesTypes.get(resourceObject);
         resourceObject = String.format("%s_%d_%d", resourceObject, nextX, nextY);
 
-        instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s %s - %s)",
-            actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
-            cellType, resourceObject, resourceType)
+        instantiatedAction = String.format("(%s %s - %s  %s - %s)",
+            actionStr, avatarVariable, avatarType, resourceObject, resourceType)
           .replace("?", "")
           .toUpperCase();
       } else {
-        instantiatedAction = String.format("(%s %s - %s %s - %s %s - %s)",
-            actionStr, avatarVariable, avatarType, currentCell, cellType, nextCell,
-            cellType)
+        instantiatedAction = String.format("(%s %s - %s)",
+            actionStr, avatarVariable, avatarType)
           .replace("?", "")
           .toUpperCase();
       }
 
       return instantiatedAction;
-    }
-
-    /**
-     * Method that generates the connection predicates between the cells of the
-     * map.
-     *
-     * @param stateObservation State observation of the game.
-     * @return Returns a set which preserves insertion order and contains
-     * the PDDL predicates associated to the cells connections.
-     */
-    private Set<String> generateConnectionPredicates(StateObservation stateObservation) {
-        // Initialize connection set
-        Set<String> connections = new LinkedHashSet<>();
-
-        // Get the observations of the game state as elements of the VGDDLRegistry
-        HashSet<String>[][] gameMap = this.getGameElementsMatrix(stateObservation);
-
-        final int X_MAX = gameMap.length, Y_MAX = gameMap[0].length;
-
-        for (int y = 0; y < Y_MAX; y++) {
-            for (int x = 0; x < X_MAX; x++) {
-                // Create string containing the current cell
-                String currentCell = String.format("%s_%d_%d - %s",
-                    this.gameInformation.cellVariable, x, y,
-                    this.gameInformation.variablesTypes.get(
-                      this.gameInformation.cellVariable)
-                    )
-                  .replace("?", "");
-
-                if (y - 1 >= 0) {
-                    String connection = this.gameInformation.connections.get(Position.UP);
-                    connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?u", String.format(
-                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y - 1,
-                          this.gameInformation.variablesTypes.get(
-                            this.gameInformation.cellVariable)
-                          )
-                        .replace("?", ""));
-
-                    connections.add(connection.toUpperCase());
-                }
-
-                if (y + 1 < Y_MAX) {
-                    String connection = this.gameInformation.connections.get(Position.DOWN);
-                    connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?d", String.format(
-                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y + 1,
-                          this.gameInformation.variablesTypes.get(
-                            this.gameInformation.cellVariable)
-                          )
-                        .replace("?", ""));
-
-                    connections.add(connection.toUpperCase());
-                }
-
-                if (x - 1 >= 0) {
-                    String connection = this.gameInformation.connections.get(Position.LEFT);
-                    connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?l", String.format(
-                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x - 1, y,
-                          this.gameInformation.variablesTypes.get(
-                            this.gameInformation.cellVariable)
-                          )
-                        .replace("?", ""));
-
-                    connections.add(connection.toUpperCase());
-                }
-
-                if (x + 1 < X_MAX) {
-                    String connection = this.gameInformation.connections.get(Position.RIGHT);
-                    connection = connection.replace("?c", currentCell);
-                    connection = connection.replace("?r", String.format(
-                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x + 1, y,
-                          this.gameInformation.variablesTypes.get(
-                            this.gameInformation.cellVariable)
-                          )
-                        .replace("?", ""));
-
-                    connections.add(connection.toUpperCase());
-                }
-            }
-        }
-
-        return connections;
     }
 }

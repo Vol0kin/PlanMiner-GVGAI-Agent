@@ -1,7 +1,6 @@
 package tracks.singlePlayer;
 
 import java.util.Random;
-import controller.RandomAgent;
 import controller.AbstractRandomAgent;
 
 import picocli.CommandLine;
@@ -27,6 +26,9 @@ public class Test {
 
 	@Option(names = {"-c", "--config"}, description = "YAML configuration file that will be used by the agent.")
 	private String configurationFile;
+
+  @Option(names = {"--numeric"}, description = "Use the NumericRandomAgent (numeric representation of the world).")
+  private boolean numeric;
 
   public static void main(String[] args) {
     // Load commandline arguments
@@ -57,7 +59,13 @@ public class Test {
     String level = game.replace(gameName, gameName + "_lvl" + test.levelIdx);
     
     // Controller
-    String controller = "controller.RandomAgent";
+    String controller;
+
+    if (test.numeric) {
+      controller = "controller.NumericRandomAgent";
+    } else {
+      controller = "controller.CellBasedRandomAgent";
+    }
     
     // Find out if the game has to be played by a human or by the agent
     boolean humanPlayer = test.configurationFile == null;

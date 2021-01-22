@@ -3,23 +3,32 @@
 # connections
 gameElementsCorrespondence:
   wall:
-  - (at ?n0 ?n1 ?wall)
+  - (row ?wall)
+  - (column ?wall)
   sword:
-  - (at ?n0 ?n1 ?sword)
+  - (row ?sword)
+  - (column ?sword)
   dirt:
-  - (at ?n0 ?n1 ?dirt)
+  - (row ?dirt)
+  - (column ?dirt)
   exitdoor:
-  - (at ?n0 ?n1 ?exitdoor)
+  - (row ?exitdoor)
+  - (column ?exitdoor)
   diamond:
-  - (at ?n0 ?n1 ?diamond)
+  - (row ?diamond)
+  - (column ?diamond)
   boulder:
-  - (at ?n0 ?n1 ?boulder)
+  - (row ?boulder)
+  - (column ?boulder)
   avatar:
-  - (at ?n0 ?n1 ?avatar)  
+  - (row ?avatar)
+  - (column ?avatar)
   crab:
-  - (at ?n0 ?n1 ?crab)
+  - (row ?crab)
+  - (column ?crab)
   butterfly:
-  - (at ?n0 ?n1 ?butterfly)
+  - (row ?butterfly)
+  - (column ?butterfly)
 variablesTypes:
   ?wall: wall
   ?sword: sword
@@ -30,9 +39,6 @@ variablesTypes:
   ?avatar: avatar
   ?crab: crab
   ?butterfly: butterfly
-  ?n0: num
-  ?n1: num
-numVariable: ?n
 avatarVariable: ?avatar
 
 # Esto habrá que modificarlo según el juego
@@ -42,7 +48,5 @@ orientationCorrespondence:
   DOWN: (oriented-down ?avatar)
   LEFT: (oriented-left ?avatar)
   RIGHT: (oriented-right ?avatar)
-connections:
-  NEXT: (next ?n1 ?n2)
-  PREVIOUS: (previous ?n1 ?n2)
+
 
