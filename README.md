@@ -43,7 +43,8 @@ $ java -jar target/RANDOM-AGENT-1.0.jar [options]
 The allowed options are listed below:
 
 ```
-Usage: GVGAI-PDDL [-hV] [-c=<configurationFile>] -g=<gameIdx> -l=<levelIdx>
+Usage: GVGAI-PDDL [-hV] [--numeric] [-c=<configurationFile>] -g=<gameIdx>
+                  -l=<levelIdx>
 Launches a new GVGAI game played by a random agent or by a human.
   -c, --config=<configurationFile>
                            YAML configuration file that will be used by the
@@ -51,5 +52,7 @@ Launches a new GVGAI game played by a random agent or by a human.
   -g, --game=<gameIdx>     Game to be played.
   -h, --help               Show this help message and exit.
   -l, --level=<levelIdx>   Level to be played.
+      --numeric            Use NumericRandomAgent (numeric representation
+                             of the world).
   -V, --version            Print version information and exit.
 ```
