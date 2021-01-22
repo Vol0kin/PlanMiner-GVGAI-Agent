@@ -65,7 +65,7 @@ public class RandomAgent extends AbstractPlayer {
     protected static List<String> executedActions = new ArrayList<>();
     protected static List<String> gamePredicates = new ArrayList<>();
 
-    protected boolean isDetectedGameOver;
+    protected boolean isGameOverDetected;
 
     /**
      * Class constructor. Creates a new random agent.
@@ -98,7 +98,7 @@ public class RandomAgent extends AbstractPlayer {
       this.actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "MOVE_RIGHT");
       this.actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
 
-      this.isDetectedGameOver = false;
+      this.isGameOverDetected = false;
     }
 
     /**
@@ -120,6 +120,12 @@ public class RandomAgent extends AbstractPlayer {
 
       // Translate game state to PDDL predicates
       String predicates = this.translateGameStateToPDDL(stateObservation);
+
+      if (this.isGameOverDetected) {
+        RandomAgent.gamePredicates.remove(RandomAgent.gamePredicates.size() - 1);
+        this.isGameOverDetected = false;
+      }
+
       RandomAgent.gamePredicates.add(predicates);
 
       // Instantiate action
@@ -152,10 +158,11 @@ public class RandomAgent extends AbstractPlayer {
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
       }
 
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 10 && !this.isGameOverDetected; i++) {
         if (nextState.isGameOver()) {
           String nextTurnPredicates = this.translateGameStateToPDDL(nextState);
           RandomAgent.gamePredicates.add(nextTurnPredicates);
+          this.isGameOverDetected = true;
         }
 
         nextState = stateObservation.copy();
