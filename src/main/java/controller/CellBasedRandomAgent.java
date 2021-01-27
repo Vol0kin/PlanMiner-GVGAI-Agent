@@ -226,6 +226,53 @@ public class CellBasedRandomAgent extends AbstractRandomAgent {
 
       return instantiatedAction;
     }
+    /**
+     * Method used to create an action instance of the USE action. An instance
+     * of the USE action follows this pattern:
+     * (USE AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     */
+    protected String createUseAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY) {
+      
+      String cellVariable = this.gameInformation.cellVariable;
+      String cellType = this.gameInformation.variablesTypes.get(cellVariable);
+
+      String avatarVariable = this.gameInformation.avatarVariable;
+      String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
+
+      int nextX = currentX;
+      int nextY = currentY;
+      
+      Vector2d avatarOrientation = stateObs.getAvatarOrientation();
+
+      if (avatarOrientation.x == 1.0) {
+        nextX++;
+      } else if (avatarOrientation.x == -1.0) {
+        nextX--;
+      } else if (avatarOrientation.y == 1.0) {
+        nextY++;
+      } else if (avatarOrientation.y == -1.0) {
+        nextY--;
+      }
+
+      // Instantiate current cell and next cell objects
+      String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
+      String destCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
+
+      String useAction = String.format("(%s %s - %s %s - %s %s - %s)",
+          actionStr, avatarVariable, avatarType, currentCell, cellType, destCell,
+          cellType)
+        .replace("?", "")
+        .toUpperCase();
+
+      return useAction;
+    }
 
     /**
      * Method that generates the connection predicates between the cells of the

@@ -216,4 +216,20 @@ public class NumericRandomAgent extends AbstractRandomAgent {
 
       return instantiatedAction;
     }
+
+    /**
+     * Method used to create an action instance of the USE action. An instance
+     * of the USE action follows this pattern:
+     * (USE AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     */
+    protected String createUseAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY) {
+      return "TODO";
+    }
 }

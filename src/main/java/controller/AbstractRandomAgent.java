@@ -119,6 +119,20 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
         String actionStr, int currentX, int currentY, boolean isResourcePicked);
 
     /**
+     * Method used to create an action instance of the USE action. An instance
+     * of the USE action follows this pattern:
+     * (USE AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     */
+    protected abstract String createUseAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY);
+
+    /**
      * Method called in each turn that returns the next action that the agent
      * will execute. It is responsible for controlling the agent's behaviour.
      *
@@ -156,17 +170,17 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
 
       int numResources = this.getNumberResources(stateObservation);
 
+      Vector2d currentAvatarPos = stateObservation.getAvatarPosition();
+      
+      int x = (int)currentAvatarPos.x / stateObservation.getBlockSize();
+      int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
+
       if (!stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation())) {
         actionStr = actionStr.replace("MOVE", "TURN");
         instantiatedAction = this.createAvatarAction(actionStr);
       } else if (action.equals(Types.ACTIONS.ACTION_USE)) {
-        instantiatedAction = this.createAvatarAction(actionStr);
+        instantiatedAction = this.createUseAction(stateObservation, actionStr, x, y);
       } else {
-        Vector2d currentAvatarPos = stateObservation.getAvatarPosition();
-        
-        int x = (int)currentAvatarPos.x / stateObservation.getBlockSize();
-        int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
-
         boolean isResourcePicked = numResources != this.getNumberResources(nextState);
 
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
