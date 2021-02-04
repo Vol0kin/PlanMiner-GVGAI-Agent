@@ -1,0 +1,34 @@
+gameElementsCorrespondence:
+  wall:
+  - (wallIn ?c)
+  dirt:
+  - (dirtIn ?c)
+  exitdoor:
+  - (exitIn ?c)
+  diamond:
+  - (prizeIn ?c)
+  boulder:
+  - (rockIn ?c)
+  avatar:
+  - (at ?c ?avatar)  
+  crab:
+  - (at ?c ?monster)
+  butterfly:
+  - (at ?c ?monster)
+variablesTypes:  
+  ?c: cell
+  ?avatar: avatar
+  ?monster: monster
+cellVariable: ?c
+avatarVariable: ?avatar
+
+orientationCorrespondence:
+  UP: (oriented-up ?avatar)
+  DOWN: (oriented-down ?avatar)
+  LEFT: (oriented-left ?avatar)
+  RIGHT: (oriented-right ?avatar)
+connections:
+  UP: (connected-up ?c ?u)
+  DOWN: (connected-down ?c ?d)
+  LEFT: (connected-left ?c ?l)
+  RIGHT: (connected-right ?c ?r)
