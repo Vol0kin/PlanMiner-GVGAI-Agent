@@ -51,6 +51,8 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
     // Correspondence between game elements and variables 
     protected Map<String, Set<String>> gameElementVars;
 
+    protected Map<String, Integer> pickedResources;
+
     protected Random randomGenerator;
     protected Map<Types.ACTIONS, String> actionCorrespondence;
 
@@ -80,6 +82,12 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       this.gameElementVars = this.extractVariablesFromPredicates();
 
       this.randomGenerator = new Random();
+
+      this.pickedResources = new HashMap<>();
+      this.gameInformation.pickedResourcesPredicates
+        .keySet()
+        .stream()
+        .forEach(resource -> this.pickedResources.put(resource, 0));
 
       this.actionCorrespondence = new HashMap<>();
 
@@ -168,7 +176,8 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       StateObservation nextState = stateObservation.copy();
       nextState.advance(action);
 
-      int numResources = this.getNumberResources(stateObservation);
+      Map<String, Integer> currentStateResources = new HashMap<>(this.pickedResources);
+      this.updatePickedResources(stateObservation, nextState);
 
       Vector2d currentAvatarPos = stateObservation.getAvatarPosition();
       
@@ -181,12 +190,12 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       } else if (action.equals(Types.ACTIONS.ACTION_USE)) {
         instantiatedAction = this.createUseAction(stateObservation, actionStr, x, y);
       } else {
-        boolean isResourcePicked = numResources != this.getNumberResources(nextState);
+        boolean isResourcePicked = !this.pickedResources.equals(currentStateResources);
 
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
       }
 
-      // Simulate next state a couple of times unitl a 
+      // Simulate next state a couple of times 
       for (int i = 0; i < AbstractRandomAgent.NUM_SIMULATIONS && !this.isGameOverDetected; i++) {
         if (nextState.isGameOver()) {
           String nextTurnPredicates = this.translateGameStateToPDDL(nextState);
@@ -283,24 +292,6 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
     }
 
     /**
-     * Method that tells how many resources are there on the map.
-     *
-     * @param stateObs Current state observation.
-     * @return Returns the number of resources on the map.
-     */ 
-    private int getNumberResources(StateObservation stateObs) {
-      int numResources = 0;
-
-      ArrayList<Observation>[] resources = stateObs.getResourcesPositions();
-
-      for (int i = 0; i < resources.length; i++) {
-        numResources += resources[i].size();
-      }
-
-      return numResources;
-    }
-
-    /**
      * Method used to extract the variables from the predicates associated to a game
      * element and associate them to game elements directly.
      *
@@ -334,5 +325,38 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       }
 
       return varsFromPredicates;
+    }
+
+    private void updatePickedResources(StateObservation currentState,
+        StateObservation nextState) {
+      Map<String, Integer> currentStateResources = new HashMap<>();
+      Map<String, Integer> nextStateResources = new HashMap<>();
+      Set<String> resourceKeys = this.pickedResources.keySet();
+
+      for (String resource: resourceKeys) {
+        currentStateResources.put(resource, 0);
+        nextStateResources.put(resource, 0);
+      }
+
+      this.countResourcesStateObservation(currentState, currentStateResources);
+      this.countResourcesStateObservation(nextState, nextStateResources);
+
+      for (String resource: resourceKeys) {
+        int numPickedResources = currentStateResources.get(resource) - nextStateResources.get(resource);
+        this.pickedResources.put(resource, this.pickedResources.get(resource) + numPickedResources);
+      }
+    }
+
+    private void countResourcesStateObservation(StateObservation stateObs,
+        Map<String, Integer> resources) {
+
+      ArrayList<Observation>[] resourcesList = stateObs.getResourcesPositions();
+
+      for (int i = 0; i < resourcesList.length; i++) {
+        for (Observation obs: resourcesList[i]) {
+          String resourceType = getGameElementFromObservation(obs);
+          resources.put(resourceType, resources.get(resourceType) + 1);
+        }
+      }
     }
 }

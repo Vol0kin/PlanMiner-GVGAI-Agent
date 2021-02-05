@@ -32,3 +32,5 @@ connections:
   DOWN: (connected-down ?c ?d)
   LEFT: (connected-left ?c ?l)
   RIGHT: (connected-right ?c ?r)
+pickedResourcesPredicates:
+  diamond: (hasDiamond)

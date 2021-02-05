@@ -41,6 +41,7 @@ public class GameInformation {
     public Map<String, String> variablesTypes;
     public Map<Position, String> orientationCorrespondence;
     public Map<Position, String> connections;
+    public Map<String, String> pickedResourcesPredicates;
 
     public GameInformation() {
     }
