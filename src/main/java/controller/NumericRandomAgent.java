@@ -133,6 +133,16 @@ public class NumericRandomAgent extends AbstractRandomAgent {
     }
 
     /**
+     * Method that creates the resource predicates.
+     *
+     * @return Returns a list containing the resource predicates that
+     * must be included in the list of predicates.
+     */ 
+    protected List<String> createResourcePredicates() {
+      return null;
+    }
+
+    /**
      * Method used to create an action instance of a movement action. An instance
      * of a movement action follows this pattern:
      * (MOV_ACTION AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE NEXT_CELL - CELL_TYPE).

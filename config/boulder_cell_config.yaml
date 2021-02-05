@@ -33,4 +33,4 @@ connections:
   LEFT: (connected-left ?c ?l)
   RIGHT: (connected-right ?c ?r)
 pickedResourcesPredicates:
-  diamond: (hasDiamond)
+  diamond: (hasGem ?avatar)

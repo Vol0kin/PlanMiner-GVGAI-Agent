@@ -110,6 +110,14 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
     protected abstract String translateGameStateToPDDL(StateObservation stateObservation);
 
     /**
+     * Method that creates the resource predicates.
+     *
+     * @return Returns a list containing the resource predicates that
+     * must be included in the list of predicates.
+     */ 
+    protected abstract List<String> createResourcePredicates();
+
+    /**
      * Method used to create an action instance of a movement action. An instance
      * of a movement action follows this pattern:
      * (MOV_ACTION AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE NEXT_CELL - CELL_TYPE).
@@ -195,6 +203,8 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
       }
 
+      AbstractRandomAgent.executedActions.add(instantiatedAction);
+
       // Simulate next state a couple of times 
       for (int i = 0; i < AbstractRandomAgent.NUM_SIMULATIONS && !this.isGameOverDetected; i++) {
         if (nextState.isGameOver()) {
@@ -206,8 +216,6 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
         nextState = stateObservation.copy();
         nextState.advance(action);
       }
-
-      AbstractRandomAgent.executedActions.add(instantiatedAction);
 
       return action;
     }

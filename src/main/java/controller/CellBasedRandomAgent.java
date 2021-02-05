@@ -130,10 +130,35 @@ public class CellBasedRandomAgent extends AbstractRandomAgent {
           }
       }
 
+      // Add resource predicates
+      predicates.addAll(this.createResourcePredicates());
+
       // Add connections to predicates
       this.connectionSet.stream().forEach(connection -> predicates.add(connection));
 
       return String.format("(%s)", String.join(" ", predicates));
+    }
+    /**
+     * Method that creates the resource predicates.
+     *
+     * @return Returns a list containing the resource predicates that
+     * must be included in the list of predicates.
+     */ 
+    protected List<String> createResourcePredicates() {
+      List<String> resourcePredicates = new ArrayList<>();
+      String avatarVariable = this.gameInformation.avatarVariable;
+      String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
+
+      for (String resource: this.pickedResources.keySet()) {
+        if (this.pickedResources.get(resource) > 0) {
+          resourcePredicates.add(this.gameInformation.pickedResourcesPredicates.get(resource)
+              .replace(avatarVariable, String.format("%s - %s", avatarVariable, avatarType)
+              .replace("?", ""))
+              .toUpperCase());
+        }
+      }
+
+      return resourcePredicates;
     }
 
     /**
