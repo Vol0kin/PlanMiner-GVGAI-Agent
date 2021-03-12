@@ -242,4 +242,23 @@ public class NumericRandomAgent extends AbstractRandomAgent {
         int currentX, int currentY) {
       return "TODO";
     }
+
+    /**
+     * Method used to create an action instance of a movement action. An instance
+     * of a movement action follows this pattern:
+     * (ACTION_NAME AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     * @param isSameOrientation Boolean that tells whether the agent's orientation
+     * will change in the next turn.
+     */
+    protected String createMovementAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY, boolean isSameOrientation) {
+
+      return "";
+    }
 }

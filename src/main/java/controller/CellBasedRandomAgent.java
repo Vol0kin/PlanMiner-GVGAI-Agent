@@ -382,4 +382,56 @@ public class CellBasedRandomAgent extends AbstractRandomAgent {
 
         return connections;
     }
+
+    /**
+     * Method used to create an action instance of a movement action. An instance
+     * of a movement action follows this pattern:
+     * (ACTION_NAME AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     * @param isSameOrientation Boolean that tells whether the agent's orientation
+     * will change in the next turn.
+     */
+    protected String createMovementAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY, boolean isSameOrientation) {
+    
+      String cellVariable = this.gameInformation.cellVariable;
+      String cellType = this.gameInformation.variablesTypes.get(cellVariable);
+
+      String avatarVariable = this.gameInformation.avatarVariable;
+      String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
+
+      int nextX = currentX;
+      int nextY = currentY;
+      
+      Vector2d avatarOrientation = stateObs.getAvatarOrientation();
+
+      if (isSameOrientation) {
+        if (avatarOrientation.x == 1.0) {
+          nextX++;
+        } else if (avatarOrientation.x == -1.0) {
+          nextX--;
+        } else if (avatarOrientation.y == 1.0) {
+          nextY++;
+        } else if (avatarOrientation.y == -1.0) {
+          nextY--;
+        }
+      }
+
+      // Instantiate current cell and next cell objects
+      String currentCell = String.format("%s_%d_%d", cellVariable, currentX, currentY);
+      String destCell = String.format("%s_%d_%d", cellVariable, nextX, nextY);
+
+      String movementAction = String.format("(%s %s - %s %s - %s %s - %s)",
+          actionStr, avatarVariable, avatarType, currentCell, cellType, destCell,
+          cellType)
+        .replace("?", "")
+        .toUpperCase();
+
+      return movementAction;
+    }
 }

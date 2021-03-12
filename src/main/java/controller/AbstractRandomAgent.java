@@ -91,10 +91,10 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
 
       this.actionCorrespondence = new HashMap<>();
 
-      this.actionCorrespondence.put(Types.ACTIONS.ACTION_UP, "MOVE_UP");
-      this.actionCorrespondence.put(Types.ACTIONS.ACTION_DOWN, "MOVE_DOWN");
-      this.actionCorrespondence.put(Types.ACTIONS.ACTION_LEFT, "MOVE_LEFT");
-      this.actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "MOVE_RIGHT");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_UP, "ACTION_UP");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_DOWN, "ACTION_DOWN");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_LEFT, "ACTION_LEFT");
+      this.actionCorrespondence.put(Types.ACTIONS.ACTION_RIGHT, "ACTION_RIGHT");
       this.actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
 
       this.isGameOverDetected = false;
@@ -148,6 +148,23 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
     protected abstract String createUseAction(StateObservation stateObs, String actionStr,
         int currentX, int currentY);
 
+
+    /**
+     * Method used to create an action instance of a movement action. An instance
+     * of a movement action follows this pattern:
+     * (ACTION_NAME AVATAR_VARIABLE - AVATAR_TYPE CURRENT_CELL - CELL_TYPE DESTINATION_CELL - CELL_TYPE).
+     *
+     * @param stateObs Current state observation.
+     * @param actionStr String that contains the movement action that is going
+     * to be instantiated.
+     * @param currentX Position of the avatar on the X-axis.
+     * @param currentY Position of the avatar on the Y-axis.
+     * @param isSameOrientation Boolean that tells whether the agent's orientation
+     * will change in the next turn.
+     */
+    protected abstract String createMovementAction(StateObservation stateObs, String actionStr,
+        int currentX, int currentY, boolean isSameOrientation);
+
     /**
      * Method called in each turn that returns the next action that the agent
      * will execute. It is responsible for controlling the agent's behaviour.
@@ -192,6 +209,15 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       int x = (int)currentAvatarPos.x / stateObservation.getBlockSize();
       int y = (int)currentAvatarPos.y / stateObservation.getBlockSize();
 
+      boolean isSameOrientation = stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation());
+
+      if (action.equals(Types.ACTIONS.ACTION_USE)) {
+        instantiatedAction = this.createUseAction(stateObservation, actionStr, x, y);
+      } else {
+        instantiatedAction = this.createMovementAction(stateObservation, actionStr, x, y, isSameOrientation);
+      }
+
+      /*
       if (!stateObservation.getAvatarOrientation().equals(nextState.getAvatarOrientation())) {
         actionStr = actionStr.replace("MOVE", "TURN");
         instantiatedAction = this.createAvatarAction(actionStr);
@@ -201,7 +227,7 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
         boolean isResourcePicked = !this.pickedResources.equals(currentStateResources);
 
         instantiatedAction = this.createMoveAction(stateObservation, actionStr, x, y, isResourcePicked);
-      }
+      }*/
 
       AbstractRandomAgent.executedActions.add(instantiatedAction);
 
