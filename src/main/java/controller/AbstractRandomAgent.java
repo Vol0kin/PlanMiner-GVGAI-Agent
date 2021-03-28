@@ -61,6 +61,7 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
 
     protected boolean isGameOverDetected;
 
+    protected Set<String> connectionSet;
     /**
      * Class constructor. Creates a new random agent.
      *
@@ -72,7 +73,7 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       Yaml yaml = new Yaml(new Constructor(GameInformation.class));
 
       try {
-          InputStream inputStream = new FileInputStream(new File(RandomAgent.gameConfigFile));
+          InputStream inputStream = new FileInputStream(new File(AbstractRandomAgent.gameConfigFile));
           this.gameInformation = yaml.load(inputStream);
       } catch (FileNotFoundException e) {
           System.out.println(e.getStackTrace());
@@ -98,6 +99,7 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
       this.actionCorrespondence.put(Types.ACTIONS.ACTION_USE, "USE");
 
       this.isGameOverDetected = false;
+      this.connectionSet = this.generateConnectionPredicates(stateObservation);
     }
 
     /**
@@ -164,6 +166,16 @@ public abstract class AbstractRandomAgent extends AbstractPlayer {
      */
     protected abstract String createMovementAction(StateObservation stateObs, String actionStr,
         int currentX, int currentY, boolean isSameOrientation);
+
+    /**
+     * Method that generates the connection predicates between the cells of the
+     * map.
+     *
+     * @param stateObservation State observation of the game.
+     * @return Returns a set which preserves insertion order and contains
+     * the PDDL predicates associated to the cells connections.
+     */
+    protected abstract Set<String> generateConnectionPredicates(StateObservation stateObservation);
 
     /**
      * Method called in each turn that returns the next action that the agent

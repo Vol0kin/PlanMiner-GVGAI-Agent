@@ -37,7 +37,6 @@ import java.util.*;
  * @author Vladislav Nikolov Vasilev
  */
 public class CellBasedRandomAgent extends AbstractRandomAgent {
-    protected Set<String> connectionSet;
 
     /**
      * Class constructor. Creates a new random agent.
@@ -47,7 +46,6 @@ public class CellBasedRandomAgent extends AbstractRandomAgent {
      */
     public CellBasedRandomAgent(StateObservation stateObservation, ElapsedCpuTimer elapsedCpuTimer) {
       super(stateObservation, elapsedCpuTimer);
-      this.connectionSet = this.generateConnectionPredicates(stateObservation);
     }
 
     /**
@@ -307,7 +305,7 @@ public class CellBasedRandomAgent extends AbstractRandomAgent {
      * @return Returns a set which preserves insertion order and contains
      * the PDDL predicates associated to the cells connections.
      */
-    private Set<String> generateConnectionPredicates(StateObservation stateObservation) {
+    protected Set<String> generateConnectionPredicates(StateObservation stateObservation) {
         // Initialize connection set
         Set<String> connections = new LinkedHashSet<>();
 

@@ -118,8 +118,10 @@ public class NumericRandomAgent extends AbstractRandomAgent {
                               }
                           }
 
-                          int coordinate = predicateInstance.contains("column") ? x : y;
-                          predicateInstance = String.format("(= %s %d)", predicateInstance, coordinate);
+						  if (predicateInstance.contains("posX") || predicateInstance.contains("posY")) {
+							  int coordinate = predicateInstance.contains("posX") ? x : y;
+							  predicateInstance = String.format("(= %s %d)", predicateInstance, coordinate);
+						  }
 
                           // Save instantiated predicate
                           predicates.add(predicateInstance.toUpperCase());
@@ -128,6 +130,15 @@ public class NumericRandomAgent extends AbstractRandomAgent {
               }
           }
       }
+
+      // Add resource predicates
+      predicates.addAll(this.createResourcePredicates());
+
+      // Add connections to predicates
+      this.connectionSet.stream().forEach(connection -> predicates.add(connection));
+
+	  // Add game tick
+	  predicates.add(String.format("(= (TICK) %d)", stateObservation.getGameTick()));
 
       return String.format("(%s)", String.join(" ", predicates));
     }
@@ -139,7 +150,24 @@ public class NumericRandomAgent extends AbstractRandomAgent {
      * must be included in the list of predicates.
      */ 
     protected List<String> createResourcePredicates() {
-      return null;
+      List<String> resourcePredicates = new ArrayList<>();
+      String avatarVariable = this.gameInformation.avatarVariable;
+      String avatarType = this.gameInformation.variablesTypes.get(avatarVariable);
+
+      for (String resource: this.pickedResources.keySet()) {
+		int numPickedResources = this.pickedResources.get(resource);
+
+		String resourcePredicateInstance = this.gameInformation.pickedResourcesPredicates.get(resource)
+			.replace(avatarVariable, String.format("%s - %s", avatarVariable, avatarType))
+			.replace("?", "")
+			.toUpperCase();
+
+		resourcePredicateInstance = String.format("(= %s %d)", resourcePredicateInstance, numPickedResources);
+
+		resourcePredicates.add(resourcePredicateInstance);
+      }
+
+      return resourcePredicates;
     }
 
     /**
@@ -260,5 +288,92 @@ public class NumericRandomAgent extends AbstractRandomAgent {
         int currentX, int currentY, boolean isSameOrientation) {
 
       return "";
+    }
+
+    /**
+     * Method that generates the connection predicates between the cells of the
+     * map.
+     *
+     * @param stateObservation State observation of the game.
+     * @return Returns a set which preserves insertion order and contains
+     * the PDDL predicates associated to the cells connections.
+     */
+    protected Set<String> generateConnectionPredicates(StateObservation stateObservation) {
+        // Initialize connection set
+        Set<String> connections = new LinkedHashSet<>();
+
+        // Get the observations of the game state as elements of the VGDDLRegistry
+        HashSet<String>[][] gameMap = this.getGameElementsMatrix(stateObservation);
+
+        final int X_MAX = gameMap.length, Y_MAX = gameMap[0].length;
+
+        for (int y = 0; y < Y_MAX; y++) {
+            for (int x = 0; x < X_MAX; x++) {
+                // Create string containing the current cell
+                String currentCell = String.format("%s_%d_%d - %s",
+                    this.gameInformation.cellVariable, x, y,
+                    this.gameInformation.variablesTypes.get(
+                      this.gameInformation.cellVariable)
+                    )
+                  .replace("?", "");
+
+				connections.add(String.format("(= (ROW %s) %d)", currentCell, y).toUpperCase());
+				connections.add(String.format("(= (COLUMN %s) %d)", currentCell, x).toUpperCase());
+
+                if (y - 1 >= 0) {
+                    String connection = this.gameInformation.connections.get(Position.UP);
+                    connection = connection.replace("?c", currentCell);
+                    connection = connection.replace("?u", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y - 1,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
+
+                    connections.add(connection.toUpperCase());
+                }
+
+                if (y + 1 < Y_MAX) {
+                    String connection = this.gameInformation.connections.get(Position.DOWN);
+                    connection = connection.replace("?c", currentCell);
+                    connection = connection.replace("?d", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x, y + 1,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
+
+                    connections.add(connection.toUpperCase());
+                }
+
+                if (x - 1 >= 0) {
+                    String connection = this.gameInformation.connections.get(Position.LEFT);
+                    connection = connection.replace("?c", currentCell);
+                    connection = connection.replace("?l", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x - 1, y,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
+
+                    connections.add(connection.toUpperCase());
+                }
+
+                if (x + 1 < X_MAX) {
+                    String connection = this.gameInformation.connections.get(Position.RIGHT);
+                    connection = connection.replace("?c", currentCell);
+                    connection = connection.replace("?r", String.format(
+                          "%s_%d_%d - %s", this.gameInformation.cellVariable, x + 1, y,
+                          this.gameInformation.variablesTypes.get(
+                            this.gameInformation.cellVariable)
+                          )
+                        .replace("?", ""));
+
+                    connections.add(connection.toUpperCase());
+                }
+            }
+        }
+
+        return connections;
     }
 }
